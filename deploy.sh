@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
-# Prompt for Region if not set
+# Prompt for Region if not provided
 if [ -z "$REGION" ]; then
   read -p "Enter GCP Region (e.g. us-central1): " REGION
 fi
 
-# Set active project ID
 PROJECT_ID=$(gcloud config get-value project)
 echo "Using Project ID: $PROJECT_ID"
 echo "Using Region: $REGION"
 
-# Navigate to lab folder
-cd pet-theory/lab08
+# Navigate to the lab source directory
+git clone https://github.com/rosera/pet-theory.git && cd pet-theory/lab08
 
-# --- Task 2: Initial Setup & Revision 0.1 ---
-echo "Creating Go REST API main.go (v0.1)..."
+# ==========================================
+# Task 2. Developing & Deploying Revision 0.1
+# ==========================================
+echo "Creating initial main.go (v0.1)..."
 cat << 'EOF' > main.go
 package main
 
@@ -58,28 +59,32 @@ gcloud artifacts repositories create my-repo \
   --location="$REGION" \
   --description="Docker repository for REST API" || true
 
-echo "Building and submitting container image v0.1..."
+echo "Building container v0.1..."
 gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/my-repo/rest-api:0.1"
 
-echo "Deploying Cloud Run service v0.1..."
+echo "Deploying REST API v0.1..."
 gcloud run deploy rest-api \
   --image "$REGION-docker.pkg.dev/$PROJECT_ID/my-repo/rest-api:0.1" \
   --region "$REGION" \
   --allow-unauthenticated \
   --max-instances=2
 
-# --- Task 3: Setup Firestore and Import Data ---
+# ==========================================
+# Task 3. Setup Firestore & Import Data
+# ==========================================
 echo "Creating Firestore Database..."
 gcloud firestore databases create --location="$REGION" --type=firestore-native || true
 
-echo "Importing customer data..."
+echo "Creating Cloud Storage Bucket and importing customer data..."
 gcloud storage buckets create "gs://$PROJECT_ID-customer" --default-storage-class=standard --location="$REGION" || true
 gcloud storage cp -r gs://spls/gsp645/2019-10-06T20:10:37_43617 "gs://$PROJECT_ID-customer"
 gcloud beta firestore import "gs://$PROJECT_ID-customer/2019-10-06T20:10:37_43617/"
 
-# --- Task 4 & 7: Connect Firestore & Deploy Revision 0.2 ---
-echo "Updating main.go with Firestore client logic..."
+# ==========================================
+# Task 4 & 7. Connect Firestore & Deploy v0.2
+# ==========================================
+echo "Updating main.go with Firestore integration..."
 cat << EOF > main.go
 package main
 
@@ -219,18 +224,18 @@ func getAmounts(ctx context.Context, c *Customer) (map[string]int64, error) {
 }
 EOF
 
-echo "Rebuilding binary..."
+echo "Rebuilding binary for revision 0.2..."
 go build -o server
 
-echo "Building and submitting revision 0.2 container image..."
+echo "Building container image v0.2..."
 gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/my-repo/rest-api:0.2"
 
-echo "Deploying Cloud Run service revision 0.2..."
+echo "Deploying REST API v0.2..."
 gcloud run deploy rest-api \
   --image "$REGION-docker.pkg.dev/$PROJECT_ID/my-repo/rest-api:0.2" \
   --region "$REGION" \
   --allow-unauthenticated \
   --max-instances=2
 
-echo "Deployment complete!"
+echo "Lab setup completed successfully!"
