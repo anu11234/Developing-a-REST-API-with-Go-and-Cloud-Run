@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 set -e
 
-# Prompt for Region if not provided
+# Prompt for Region with a default value (europe-west4)
 if [ -z "$REGION" ]; then
-  read -p "Enter GCP Region (e.g. europe-west4): " REGION
+  read -p "Enter GCP Region [default: europe-west4]: " REGION
+  REGION=${REGION:-europe-west4}
 fi
 
 PROJECT_ID=$(gcloud config get-value project)
 echo "Using Project ID: $PROJECT_ID"
 echo "Using Region: $REGION"
 
-# Clone repository first, then enter directory
+# Clone repository first if it doesn't exist, then navigate into lab directory
 if [ ! -d "pet-theory" ]; then
+  echo "Cloning pet-theory repository..."
   git clone https://github.com/rosera/pet-theory.git
 fi
 cd pet-theory/lab08
