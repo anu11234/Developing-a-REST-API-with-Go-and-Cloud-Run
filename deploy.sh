@@ -3,15 +3,18 @@ set -e
 
 # Prompt for Region if not provided
 if [ -z "$REGION" ]; then
-  read -p "Enter GCP Region (e.g. us-central1): " REGION
+  read -p "Enter GCP Region (e.g. europe-west4): " REGION
 fi
 
 PROJECT_ID=$(gcloud config get-value project)
 echo "Using Project ID: $PROJECT_ID"
 echo "Using Region: $REGION"
 
-# Navigate to the lab source directory
-git clone https://github.com/rosera/pet-theory.git && cd pet-theory/lab08
+# Clone repository first, then enter directory
+if [ ! -d "pet-theory" ]; then
+  git clone https://github.com/rosera/pet-theory.git
+fi
+cd pet-theory/lab08
 
 # ==========================================
 # Task 2. Developing & Deploying Revision 0.1
@@ -44,7 +47,7 @@ EOF
 
 echo "Creating Dockerfile..."
 cat << 'EOF' > Dockerfile
-FROM distroless/base-debian11
+FROM gcr.io/distroless/base-debian12
 WORKDIR /usr/src/app
 COPY server .
 CMD [ "/usr/src/app/server" ]
