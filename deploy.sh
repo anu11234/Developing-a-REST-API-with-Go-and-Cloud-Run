@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# Prompt for Region with a default value (europe-west4)
+# Set default region to europe-west4 (matching your lab environment)
 if [ -z "$REGION" ]; then
   read -p "Enter GCP Region [default: europe-west4]: " REGION
   REGION=${REGION:-europe-west4}
@@ -11,11 +11,16 @@ PROJECT_ID=$(gcloud config get-value project)
 echo "Using Project ID: $PROJECT_ID"
 echo "Using Region: $REGION"
 
-# Clone repository first if it doesn't exist, then navigate into lab directory
+# Set active project configuration
+gcloud config set project "$PROJECT_ID"
+
+# 1. Clone the repository first if not already cloned
 if [ ! -d "pet-theory" ]; then
   echo "Cloning pet-theory repository..."
   git clone https://github.com/rosera/pet-theory.git
 fi
+
+# 2. Navigate into the lab directory
 cd pet-theory/lab08
 
 # ==========================================
